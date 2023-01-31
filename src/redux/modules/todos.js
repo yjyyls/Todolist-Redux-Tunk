@@ -48,7 +48,7 @@ export const __deleteTodoThunk = createAsyncThunk(
             const res = await axios.delete(
                 `http://localhost:4000/todos/${arg}`
             );
-            return thunkAPI.fulfillWithValue(res.data);
+            return thunkAPI.fulfillWithValue(arg);
         } catch (error) {
             return thunkAPI.rejectWithValue(error);
         }
@@ -60,12 +60,10 @@ export const __switchTodoThunk = createAsyncThunk(
     "SWITCH_TODO",
     async (arg, thunkAPI) => {
         try {
-            const res = await axios.patch(
-                `http://localhost:4000/todos/${arg.id}`,
-                arg
-            );
-            console.log("arg", arg);
-            return thunkAPI.fulfillWithValue(res.data);
+            await axios.patch(`http://localhost:4000/todos/${arg.id}`, {
+                isDone: arg.isDone,
+            });
+            return thunkAPI.fulfillWithValue(arg.id);
         } catch (error) {
             return thunkAPI.rejectWithValue(error);
         }
@@ -131,19 +129,23 @@ const todosSlice = createSlice({
         },
 
         [__deleteTodoThunk.fulfilled]: (state, action) => {
-            state.todos.filter((item) => item.id !== action.payload);
+            const newTodos = state.todos.filter(
+                (item) => item.id !== action.payload
+            );
+            state.todos = newTodos;
         },
         [__deleteTodoThunk.rejected]: (state, action) => {
             //
         },
         [__switchTodoThunk.fulfilled]: (state, action) => {
-            state.todos.map((item) => {
+            const newTodos = state.todos.map((item) => {
                 if (item.id === action.payload) {
                     return { ...item, isDone: !item.isDone };
                 } else {
                     return item;
                 }
             });
+            state.todos = newTodos
         },
         [__switchTodoThunk.rejected]: (state, action) => {
             //
